@@ -55,7 +55,7 @@ And here's an example of using an object callback:
     var mapping = {foo: "ows_Foo", barBaz: "ows_Bar_x0020_Baz"};
     
     $.post("http://sharepointsite.example.com/_vti_bin/Lists.asmx", soapRequestXML, function(data){
-      var json = $(data).sharePointJSON({mapping: mapping});
+      var json = $(data).sharePointJSON({mapping: mapping, callback: callback});
       
       $.isArray(json) // True
       $.each(function(i, obj){
