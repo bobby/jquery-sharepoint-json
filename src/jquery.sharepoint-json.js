@@ -3,7 +3,7 @@ jQuery SharePoint XML to JSON
 
 Usage:
 
-$(xml).sharepointJSON(options);
+$(xml).sharePointJSON(options);
 
 where 'xml' is XML document returned from a SP web service call to 'GetListItems' (i.e. xdata.responseXML()),
 and 'options' (optional) is an object containing the following options (both likewise optional):
@@ -18,13 +18,48 @@ and 'options' (optional) is an object containing the following options (both lik
 
   callback: A function to be called for each object parsed from the xml.  This function should take a
     single argument, the object parsed from the XML, and its return value will be added to the array to be returned from the
-    main sharepointJSON function.  It is recommended that the callback return the object itself, modified in some way.
+    main sharePointJSON function.  It is recommended that the callback return the object itself, modified in some way.
 
 Returns
 It returns an array of objects corresponding to the list items.
 */
 (function($) {
-  $.fn.sharepointJSON = function(options){
+  var sanitizeColumnValue = function(value) {
+    if (!value || value === "") return null;
+    // Multiple, non-lookup values
+    if (value.match(/^;#/)) {
+      value = value.replace(/^;#/, "").replace(/;#$/, "").split(";#");
+      return value;
+    }
+    // Lookup value, possibly multiple
+    if (value.match(/;#/)) {
+      if (value.split(";#").length > 2) {
+        // Multiple values
+        var tmpPropertyValueSplit = value.split(";#");
+        value = [];
+        propertyIndex = [];
+        $.each(tmpPropertyValueSplit, function(index, val){
+          if (index % 2 == 0) {
+            // Even index => lookup index
+            propertyIndex.push(val);
+          } else {
+            // Odd index => lookup value
+            value.push(val);
+          }
+        });
+        return value;
+      }
+      
+      // Single value
+      // Possibly a Calculated field type;#value pair
+      propertyIndex = value.split(";#")[0];
+      value = value.split(";#")[1];
+    }
+    // Single, non-lookup value
+    return value;
+  }
+  
+  $.fn.sharePointJSON = function(options){
     var settings = {
       mapping: {created: "ows_Created", modified: "ows_Modified", title: "ows_Title"},
       callback: null
@@ -45,41 +80,6 @@ It returns an array of objects corresponding to the list items.
     }
     
     var events = [];
-  
-    var sanitizeColumnValue = function(value) {
-      if (!value || value === "") return null;
-      // Multiple, non-lookup values
-      if (value.match(/^;#/)) {
-        value = value.replace(/^;#/, "").replace(/;#$/, "").split(";#");
-        return value;
-      }
-      // Lookup value, possibly multiple
-      if (value.match(/;#/)) {
-        if (value.split(";#").length > 2) {
-          // Multiple values
-          var tmpPropertyValueSplit = value.split(";#");
-          value = [];
-          propertyIndex = [];
-          $.each(tmpPropertyValueSplit, function(index, val){
-            if (index % 2 == 0) {
-              // Even index => lookup index
-              propertyIndex.push(val);
-            } else {
-              // Odd index => lookup value
-              value.push(val);
-            }
-          });
-          return value;
-        }
-        
-        // Single value
-        // Possibly a Calculated field type;#value pair
-        propertyIndex = value.split(";#")[0];
-        value = value.split(";#")[1];
-      }
-      // Single, non-lookup value
-      return value;
-    }
     
     this.find("[nodeName=z:row]").each(function(){
       var $this = $(this);
