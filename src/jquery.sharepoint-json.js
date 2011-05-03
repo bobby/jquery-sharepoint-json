@@ -81,7 +81,7 @@ It returns an array of objects corresponding to the list items.
     
     var events = [];
     
-    this.find("[nodeName=z:row]").each(function(){
+    this.find('[nodeName="z:row"]').each(function(){
       var $this = $(this);
       var event = {};
 
